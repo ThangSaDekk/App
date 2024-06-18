@@ -306,6 +306,7 @@ const styles = StyleSheet.create({
     },
     text: {
         fontSize: 17,
+        fontWeight:'bold',
         marginBottom: 5,
         backgroundColor: "#FFA500",
         paddingHorizontal: 40,
