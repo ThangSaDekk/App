@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Modal, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import api, { authApi } from '../services/api';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,14 +18,16 @@ const SearchScreen = ({ route }) => {
     const navigation = useNavigation();
     const user = useContext(MyUserContext)
     const [routeEle, setRouteEle] = useState({})
+    const [text, setText] = useState(-1);
     const fields = [
+        { label: "Mã Tuyến (Ví dụ: HCM_HANOI): ", icon: "account", name: "code" },
         { label: "Điểm bắt đầu: ", icon: "account", name: "starting_point" },
         { label: "Điểm đến: ", icon: "account", name: "destination" },
         { label: "Thời gian hoạt động: (Ex: 4:00-23:00) ", icon: "mail", name: "active_time" },
         { label: "Khoảng cách: ", icon: "phone", name: "distance" },
-        { label: "Thời gian dự kiến hoàn thành: ", icon: "address", name: "estimated_duration"},
-        { label: "Tuần suất:(01:00:00) ", icon: "address", name: "frequency"},
-        { label: "Giá tiền: ", icon: "address", name: "fare"}
+        { label: "Thời gian dự kiến hoàn thành: ", icon: "address", name: "estimated_duration" },
+        { label: "Tuần suất:(01:00:00) ", icon: "address", name: "frequency" },
+        { label: "Giá tiền: ", icon: "address", name: "fare" }
 
     ];
     const fetchBusRoutes = async () => {
@@ -86,9 +88,47 @@ const SearchScreen = ({ route }) => {
         console.log(res.data);
         onRefresh()
     }
-    const handleAddBusRoute = () =>{
+    const handleAddBusRoute = () => {
         console.log("Tan")
     }
+
+
+    const handleUpdateFare = async (busroute) => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+
+            // Display confirmation dialog
+            Alert.alert(
+                'Xác nhận',
+                'Bạn có chắc chắn muốn cập nhật giá vé?',
+                [
+                    {
+                        text: 'Hủy',
+                        style: 'cancel',
+                    },
+                    {
+                        text: 'Xác nhận',
+                        onPress: async () => {
+                            let res;
+                            if (text > -1) {
+                                res = await authApi(token).patch(`/busroutes/${busroute}/`, { 'fare': Number(text) * 1000 });
+                                console.log(res.data);
+                                onRefresh();
+                            }
+                            setText(-1);
+                            Alert.alert('Cập nhật thành công')
+                        },
+                        
+                    },
+                ],
+                { cancelable: false }
+            );
+
+        } catch (error) {
+            Alert.alert('Lỗi', error.message);
+        }
+    }
+
 
     const renderItem = ({ item }) => (
         <View>
@@ -113,30 +153,50 @@ const SearchScreen = ({ route }) => {
                     <Text style={styles.cardText}>Điểm số: {item.bias} point</Text>
                 </View>
             </TouchableOpacity>
-            {user && user.role == 'admin' ? <View style={[styles.statusContainer, { backgroundColor: "#f0f0f0" }]}>
-                <Text style={styles.statusText}>
-                    <Ionicons
-                        name={item.active ? "checkmark-circle-outline" : "close-circle-outline"}
-                        size={22}
-                        color={item.active ? "green" : "red"}
+            {user && user.role === 'admin' ? (
+                <View style={[styles.statusContainer, { backgroundColor: "#f0f0f0" }]}>
+                    <Text style={styles.statusText}>
+                        <Ionicons
+                            name={item.active ? "checkmark-circle-outline" : "close-circle-outline"}
+                            size={22}
+                            color={item.active ? "green" : "red"}
+                        />
+                        {item.active ? " Đang hoạt động" : " Đang khóa"}
+                    </Text>
+                    <Button
+                        mode="contained"
+                        icon={item.active ? "lock-outline" : "lock-open-outline"}
+                        onPress={() => handleLockOrUnLock(item.active, item.id)}
+                        style={[styles.lockButton, { backgroundColor: item.active ? "#FA8072" : "lightgreen" }]}
+                        labelStyle={styles.lockButtonText}
+                    >
+                        {item.active ? "Khóa" : "Mở khóa"}
+                    </Button>
+                </View>
+            ) : null}
 
+            {!user/* && user.role === 'busowner'*/ ? (
+                <View style={styles.additionalInfoContainer}>
+                    <TextInput
+                        placeholder="Chỉnh sửa giá vé (Ví dụ: 100 200 300)"
+                        value={text}
+                        onChangeText={setText}
+                        style={[styles.input, { flex: 1 }]} // Adjust input style to take up remaining space
+                        keyboardType='numeric'
                     />
-                    {item.active ? " Đang hoạt động" : " Đang khóa"}
-                </Text>
-                <Button
-                    mode="contained"
-                    icon={item.active ? "lock-outline" : "lock-open-outline"}
-                    onPress={() => handleLockOrUnLock(item.active, item.id)}
-                    style={[styles.lockButton, { backgroundColor: item.active ? "#FA8072" : "lightgreen" }]}
-                    labelStyle={styles.lockButtonText}
-                >
-                    {item.active ? "Khóa" : "Mở khóa"}
-                </Button>
-            </View> : <></>
-
-            }
+                    <Button
+                        mode="contained"
+                        onPress={() => handleUpdateFare(item.id)}
+                        style={styles.additionalInfoButton}
+                        labelStyle={styles.additionalInfoButtonText}
+                    >
+                        Cập nhật
+                    </Button>
+                </View>
+            ) : null}
         </View>
     );
+
 
     return (
         <View style={styles.container}>
@@ -172,21 +232,21 @@ const SearchScreen = ({ route }) => {
                     Đánh giá tốt nhất
                 </Button>
             </View>
-           
-            {user && user.role ==='busowner'?
-            <>
-                   <Button
-                    icon="bus"
-                    mode="contained"
-                    onPress={() => {setShowEditDialog(true)}}
-                    style={[styles.filterButton, {width:'97%', marginBottom:10, backgroundColor:"lightgreen"}]}
-                    labelStyle={styles.filterButtonText}
-                >
-                    THÊM TUYẾN XE
-                </Button>
-            </>:<></>
+
+            {user && user.role === 'busowner' ?
+                <>
+                    <Button
+                        icon="bus"
+                        mode="contained"
+                        onPress={() => { setShowEditDialog(true) }}
+                        style={[styles.filterButton, { width: '97%', marginBottom: 10, backgroundColor: "lightgreen" }]}
+                        labelStyle={styles.filterButtonText}
+                    >
+                        THÊM TUYẾN XE
+                    </Button>
+                </> : <></>
             }
-             <Text style={styles.note}>* Thực hiện cập nhật lại trang để tìm được những tuyến đi tốt nhất.</Text>
+            <Text style={styles.note}>* Thực hiện cập nhật lại trang để tìm được những tuyến đi tốt nhất.</Text>
             {loading ? (
                 <ActivityIndicator size="large" color="#FFA500" style={styles.loading} />
             ) : (
@@ -203,7 +263,7 @@ const SearchScreen = ({ route }) => {
                     }
                 />
             )}
-              <Modal
+            <Modal
                 visible={showEditDialog}
                 transparent={true}
                 animationType="slide"
@@ -211,7 +271,7 @@ const SearchScreen = ({ route }) => {
             >
                 <View style={styles.modalBackground}>
                     <View style={styles.editDialog}>
-                        <Text style={styles.editDialogTitle}>Chỉnh sửa thông tin</Text>
+                        <Text style={styles.editDialogTitle}>THÊM TUYẾN XE</Text>
                         {fields.map((field) => (
                             <TextInput
                                 key={field.name}
@@ -224,9 +284,9 @@ const SearchScreen = ({ route }) => {
                         <View style={styles.buttonRow}>
                             <TouchableOpacity
                                 style={styles.editButton}
-                                onPress={handleAddBusRoute} 
+                                onPress={handleAddBusRoute}
                             >
-                                <Text style={styles.editButtonText}>Xác nhận chỉnh sửa</Text>
+                                <Text style={styles.editButtonText}>Gửi yêu cầu</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -239,7 +299,7 @@ const SearchScreen = ({ route }) => {
                     </View>
                 </View>
             </Modal>
-            
+
         </View>
 
     );
@@ -354,9 +414,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     editDialogTitle: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: "bold",
-        marginBottom: 10,
+        marginBottom: 20,
     },
     editInput: {
         width: "100%",
@@ -391,6 +451,22 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         width: "100%",
     },
+    additionalInfoContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    additionalInfoButton: {
+        backgroundColor: '#FFA500',
+        paddingVertical: 3,
+        width: '40%',
+        borderRadius: 30,
+    },
+    additionalInfoButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+
 });
 
 export default SearchScreen;

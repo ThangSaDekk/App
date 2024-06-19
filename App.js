@@ -62,73 +62,70 @@ const SearchStack = () => {
 
 // Component App chính của ứng dụng
 const MyTab = () => {
-  const user = useContext(MyUserContext); 
-
+  const user = useContext(MyUserContext);
 
   return (
-      <Tab.Navigator
-        initialRouteName="Home"
-        screenOptions={({ route }) => ({
-          tabBarActiveTintColor: '#FFA500',
-          tabBarInactiveTintColor: 'gray',
-          tabBarIcon: ({ color, size }) => {
-            let iconName;
-            if (route.name === 'Trang chủ') {
-              iconName = 'bus';
-            } else if (route.name === 'SearchBus') {
-              iconName = 'search';
-            } else if (route.name === 'Login') {
-              iconName = 'log-in';
-            } else if (route.name === 'Register') {
-              iconName = 'person-add';
-            } else if (route.name === 'Profile'){
-              iconName = 'person'
-            }
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-        })}
-      >
-        <Tab.Screen
-          name="Trang chủ"
-          component={HomeStack}
-          options={{ tabBarLabel: 'Danh sách nhà xe' }}
-        />
-        <Tab.Screen
+    <Tab.Navigator
+      initialRouteName="Home"
+      screenOptions={({ route }) => ({
+        tabBarActiveTintColor: '#FFA500',
+        tabBarInactiveTintColor: 'gray',
+        tabBarIcon: ({ color, size }) => {
+          let iconName;
+          if (route.name === 'Trang chủ') {
+            iconName = 'bus';
+          } else if (route.name === 'SearchBus') {
+            iconName = 'search';
+          } else if (route.name === 'Login') {
+            iconName = 'log-in';
+          } else if (route.name === 'Register') {
+            iconName = 'person-add';
+          } else if (route.name === 'Profile') {
+            iconName = 'person';
+          }
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen
+        name="Trang chủ"
+        component={HomeStack}
+        options={{ tabBarLabel: 'Danh sách nhà xe' }}
+      />
+      <Tab.Screen
         name="SearchBus"
         component={SearchStack}
         options={{ tabBarLabel: 'Tìm kiếm tuyến đi' }}
-      /> 
-        {user === null ? (
-          <>
-            <Tab.Screen
-              name="Login"
-              component={LoginScreen}
-              options={{ tabBarLabel: 'Đăng nhập' }}
-            />
-            <Tab.Screen
-              name="Register"
-              component={RegisterScreen}
-              options={{ tabBarLabel: 'Đăng ký' }}
-            />
-          </>
-        ) : (
+      />
+      {user === null ? (
+        <>
           <Tab.Screen
-            name="Profile"
-            component={ProfileScreen}
-            options={{ title: 'Hồ sơ cá nhân'}}
+            name="Login"
+            component={LoginScreen}
+            options={{ tabBarLabel: 'Đăng nhập' }}
           />
-        )}
-      </Tab.Navigator>
+          <Tab.Screen
+            name="Register"
+            component={RegisterScreen}
+            options={{ tabBarLabel: 'Đăng ký' }}
+          />
+        </>
+      ) : (
+        <Tab.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{ title: 'Hồ sơ cá nhân' }}
+        />
+      )}
+    </Tab.Navigator>
   );
 };
-
-
 
 export default function App() {
   const [user, dispatch] = useReducer(MyUserReducer, null);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer key={user ? 'user' : 'guest'}>
       <MyUserContext.Provider value={user}>
         <MyDispatchContext.Provider value={dispatch}>
           <MyTab />
