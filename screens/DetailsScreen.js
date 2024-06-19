@@ -70,11 +70,16 @@ const DetailsScreen = ({ route, navigation }) => {
             });
             
             // Thực hiện thay đổi nhà xe thành busowner
-            let formAcccount 
-            await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`,{
-                "username" : (resbusinfor.data.code).toLowerCase(),
-                "role" : 'busowner'
+            let formAccount  = new FormData();
+            formAccount.append('username', (resbusinfor.data.code).toLowerCase())
+            formAccount.append('role', 'busowner')
+            const resaccount = await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`,formAccount, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             })
+            console.log(resaccount.data.username)
+            console.log(resaccount.data.role)
 
             // Điều hướng đến trang Home với tham số reload
             navigation.navigate('Home', { reload: Math.random() });
@@ -106,11 +111,24 @@ const DetailsScreen = ({ route, navigation }) => {
                 authApi(token).patch(`busroutes/${item.id}/`, { 'active': false })
                 console.log(item.name)
             });
-
-            const resaccount = await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`,{
-                "role" : 'customer'
+            let formAccount  = new FormData();
+            formAccount.append('role', 'customer');
+            const resaccount1 = await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`,formAccount,{
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             })
-            console.log(resaccount.data)
+            console.log(resaccount1.data.username)
+            formAccount.append('username', resaccount1.data.phone);
+            const resaccount2 = await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`,formAccount,{
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+        
+            console.log(resaccount2.data.username)
+            console.log(resaccount2.data.role)
+
 
             // Điều hướng đến trang Home với tham số reload
             navigation.navigate('Home', { reload: Math.random() });

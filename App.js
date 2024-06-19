@@ -75,7 +75,7 @@ const MyTab = () => {
             let iconName;
             if (route.name === 'Trang chủ') {
               iconName = 'bus';
-            } else if (route.name === 'Tìm kiếm tuyến đi') {
+            } else if (route.name === 'SearchBus') {
               iconName = 'search';
             } else if (route.name === 'Login') {
               iconName = 'log-in';
@@ -94,10 +94,10 @@ const MyTab = () => {
           options={{ tabBarLabel: 'Danh sách nhà xe' }}
         />
         <Tab.Screen
-          name="Tìm kiếm tuyến đi"
-          component={SearchStack}
-          options={{ tabBarLabel: 'Tìm kiếm tuyến đi' }}
-        />
+        name="SearchBus"
+        component={SearchStack}
+        options={{ tabBarLabel: 'Tìm kiếm tuyến đi' }}
+      /> 
         {user === null ? (
           <>
             <Tab.Screen

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import api, { authApi } from '../services/api';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,17 +12,27 @@ const SearchScreen = ({ route }) => {
     const [toPoint, setToPoint] = useState('');
     const [routes, setRoutes] = useState([]);
     const [sortCriteria, setSortCriteria] = useState('');
+    const [showEditDialog, setShowEditDialog] = useState(false);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const navigation = useNavigation();
     const user = useContext(MyUserContext)
+    const [routeEle, setRouteEle] = useState({})
+    const fields = [
+        { label: "Điểm bắt đầu: ", icon: "account", name: "starting_point" },
+        { label: "Điểm đến: ", icon: "account", name: "destination" },
+        { label: "Thời gian hoạt động: (Ex: 4:00-23:00) ", icon: "mail", name: "active_time" },
+        { label: "Khoảng cách: ", icon: "phone", name: "distance" },
+        { label: "Thời gian dự kiến hoàn thành: ", icon: "address", name: "estimated_duration"},
+        { label: "Tuần suất:(01:00:00) ", icon: "address", name: "frequency"},
+        { label: "Giá tiền: ", icon: "address", name: "fare"}
 
+    ];
     const fetchBusRoutes = async () => {
         setLoading(true);
         try {
             let busId = 0;
-            if (route.params?.busId && user && user.role === 'admin') { busId = route.params?.busId }
-
+            if (route.params?.busId && user && (user.role === 'admin' || user.role === 'busowner')) { busId = route.params?.busId }
 
             console.log(busId)
             let url;
@@ -57,6 +67,13 @@ const SearchScreen = ({ route }) => {
         fetchBusRoutes();
     }, [fromPoint, toPoint, sortCriteria, route.params?.busId, user]);
 
+    const updateState = (fieldName, value) => {
+        setRouteEle({
+            ...routeEle,
+            [fieldName]: value
+        });
+    };
+
     const onRefresh = async () => {
         setRefreshing(true);
         await fetchBusRoutes();
@@ -68,6 +85,9 @@ const SearchScreen = ({ route }) => {
         let res = authApi(token).patch(`/busroutes/${busroute}/`, { 'active': !active })
         console.log(res.data);
         onRefresh()
+    }
+    const handleAddBusRoute = () =>{
+        console.log("Tan")
     }
 
     const renderItem = ({ item }) => (
@@ -152,8 +172,21 @@ const SearchScreen = ({ route }) => {
                     Đánh giá tốt nhất
                 </Button>
             </View>
-            <Text style={styles.note}>* Thực hiện cập nhật lại trang để tìm được những tuyến đi tốt nhất.</Text>
-
+           
+            {user && user.role ==='busowner'?
+            <>
+                   <Button
+                    icon="bus"
+                    mode="contained"
+                    onPress={() => {setShowEditDialog(true)}}
+                    style={[styles.filterButton, {width:'97%', marginBottom:10, backgroundColor:"lightgreen"}]}
+                    labelStyle={styles.filterButtonText}
+                >
+                    THÊM TUYẾN XE
+                </Button>
+            </>:<></>
+            }
+             <Text style={styles.note}>* Thực hiện cập nhật lại trang để tìm được những tuyến đi tốt nhất.</Text>
             {loading ? (
                 <ActivityIndicator size="large" color="#FFA500" style={styles.loading} />
             ) : (
@@ -170,7 +203,45 @@ const SearchScreen = ({ route }) => {
                     }
                 />
             )}
+              <Modal
+                visible={showEditDialog}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowEditDialog(false)}
+            >
+                <View style={styles.modalBackground}>
+                    <View style={styles.editDialog}>
+                        <Text style={styles.editDialogTitle}>Chỉnh sửa thông tin</Text>
+                        {fields.map((field) => (
+                            <TextInput
+                                key={field.name}
+                                placeholder={field.label}
+                                value={routeEle[field.name]}
+                                onChangeText={(text) => updateState(field.name, text)}
+                                style={styles.editInput}
+                            />
+                        ))}
+                        <View style={styles.buttonRow}>
+                            <TouchableOpacity
+                                style={styles.editButton}
+                                onPress={handleAddBusRoute} 
+                            >
+                                <Text style={styles.editButtonText}>Xác nhận chỉnh sửa</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.editButtonCancel}
+                                onPress={() => setShowEditDialog(false)}
+                            >
+                                <Text style={styles.editButtonText}>Hủy</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+            
         </View>
+
     );
 };
 
@@ -268,6 +339,57 @@ const styles = StyleSheet.create({
     },
     lockButtonText: {
         color: '#fff',
+    },
+    modalBackground: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    editDialog: {
+        width: "90%",
+        backgroundColor: "white",
+        borderRadius: 10,
+        padding: 20,
+        alignItems: "center",
+    },
+    editDialogTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 10,
+    },
+    editInput: {
+        width: "100%",
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 5,
+        padding: 10,
+        marginBottom: 10,
+    },
+    editButton: {
+        flex: 1,
+        backgroundColor: "#4CAF50",
+        padding: 10,
+        borderRadius: 5,
+        alignItems: "center",
+        marginHorizontal: 5,
+    },
+    editButtonCancel: {
+        flex: 1,
+        backgroundColor: "#F44336",
+        padding: 10,
+        borderRadius: 5,
+        alignItems: "center",
+        marginHorizontal: 5,
+    },
+    editButtonText: {
+        color: "white",
+        fontWeight: "bold",
+    },
+    buttonRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        width: "100%",
     },
 });
 

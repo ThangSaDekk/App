@@ -125,7 +125,6 @@ const ProfileScreen = () => {
             >
                 Đăng xuất
             </Button>
-            // modal chỉnh sửa thông tiin người dùng
             <Modal
                 visible={showEditDialog}
                 transparent={true}

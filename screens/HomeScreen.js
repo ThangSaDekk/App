@@ -1,14 +1,16 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Text, Image, RefreshControl } from 'react-native';
 import { ActivityIndicator, Button as PaperButton } from 'react-native-paper'; // Import Button from react-native-paper
-import api from '../services/api';
+import api, { authApi } from '../services/api';
 import { MyUserContext } from '../services/Contexts';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = ({ route, navigation }) => {
   const [buses, setBuses] = useState([]);
   const [loading, setLoading] = useState(true);
   const user = useContext(MyUserContext);
   const [roleAdmin, setRoleAdmin] = useState(false);
+  const [roleBusOwner, setRoleBusOwner] = useState(false);
   const [end, setEnd] = useState('/businfors/?active=1');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -16,8 +18,34 @@ const HomeScreen = ({ route, navigation }) => {
   const fetchBusInfos = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`${end}`);
-      setBuses(response.data.results);
+      let response;
+      // Thực hiện tải businfor của nhà xe
+      if (user && user.role === 'busowner')
+      {
+        const token = await AsyncStorage.getItem('token');
+        response = await authApi(token).get('/businfors/current-businfor/')
+        console.log(response.data)
+        setBuses(response.data);
+        console.log(buses.length)
+        setRoleBusOwner(true);
+        setRoleAdmin(false);
+
+      }
+      else if (user && user.role === 'admin') {
+        response = await api.get(`${end}`);
+        setBuses(response.data.results);
+        console.log(buses.length)
+        setRoleBusOwner(false);
+        setRoleAdmin(true);
+      }
+      else{
+        response = await api.get(`${end}`);
+        setBuses(response.data.results);
+        console.log(buses.length)
+        setRoleBusOwner(false);
+        setRoleAdmin(false);
+      }
+
     } catch (error) {
       console.error(error);
     } finally {
@@ -43,8 +71,8 @@ const HomeScreen = ({ route, navigation }) => {
     <View style={styles.card}>
       <Image source={{ uri: bus.avatar }} style={styles.avatar} />
       <Text style={styles.name}>{bus.name}</Text>
-      <Text style={styles.code}>Mã nhà xe: {bus.account}</Text>
-      {roleAdmin && end === '/businfors/?active=1' ? (
+      <Text style={styles.code}>Mã nhà xe: {bus.code}</Text>
+      {(user && roleAdmin && end === '/businfors/?active=1' )|| (user && roleBusOwner) ? (
         <View style={styles.buttonContainer}>
           <PaperButton
             mode="contained"
@@ -79,18 +107,19 @@ const HomeScreen = ({ route, navigation }) => {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-      />}>
-      {roleAdmin && <Text style={styles.namePage}>TRANG QUẢN TRỊ NHÀ XE</Text>}
-      {user && roleAdmin === false && (
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
+      {/* Các phần header tùy thuộc vào vai trò của user */}
+      {user && roleAdmin && <Text style={styles.namePage}>TRANG QUẢN TRỊ CỦA ADMIN </Text>}
+      {user && !roleAdmin && !roleBusOwner && (
         <Text style={styles.namePage}>
           Chào {user.last_name} {user.first_name} !!
         </Text>
       )}
-
-      {roleAdmin && (
+      {user && roleBusOwner && <Text style={styles.namePage}>TRANG QUẢN TRỊ CỦA ĐỐI TÁC !!</Text>}
+  
+      {/* Phần filter tùy thuộc vào vai trò admin */}
+      {user && roleAdmin && (
         <View style={styles.filterContainer}>
           <PaperButton
             mode="contained"
@@ -110,32 +139,47 @@ const HomeScreen = ({ route, navigation }) => {
           </PaperButton>
         </View>
       )}
-
+  
+      {/* Hiển thị danh sách hoặc thông báo không có bus */}
       {loading ? (
         <View style={styles.containerIC}>
           <View style={styles.activityIndicatorContainer}>
             <ActivityIndicator animating={true} color="#FFA500" size="large" />
           </View>
         </View>
-      ) : buses.length > 0 ? (
-        buses.map((bus) => (
-          <BusCard
-            key={bus.id}
-            bus={bus}
-            onPress={() => navigation.navigate('Details', { busId: bus.id })}
-          />
-        ))
       ) : (
-        <View style={styles.noBusesContainer}>
-          <Text style={styles.noBusesText}>
-            {end === '/businfors/?active=1'
-              ? 'Không có nhà xe đối tác đang hoạt động'
-              : 'Không có yêu cầu chờ duyệt'}
-          </Text>
-        </View>
+        <>
+          {/* Kiểm tra nếu buses là mảng */}
+          {Array.isArray(buses) && buses.length > 0 ? (
+            buses.map((bus) => (
+              <BusCard
+                key={bus.id}
+                bus={bus}
+                onPress={() => navigation.navigate('Details', { busId: bus.id })}
+              />
+            ))
+          ) : (
+            /* Kiểm tra nếu buses là đối tượng JSON */
+            typeof buses === 'object' ? (
+              <BusCard
+                bus={buses} // Hiển thị thông tin của đối tượng JSON
+                onPress={() => navigation.navigate('Details', { busId: buses.id })}
+              />
+            ) : (
+              <View style={styles.noBusesContainer}>
+                <Text style={styles.noBusesText}>
+                  {end === '/businfors/?active=1'
+                    ? 'Không có nhà xe đối tác đang hoạt động'
+                    : 'Không có yêu cầu chờ duyệt'}
+                </Text>
+              </View>
+            )
+          )}
+        </>
       )}
     </ScrollView>
   );
+
 };
 
 const styles = StyleSheet.create({
