@@ -88,9 +88,30 @@ const SearchScreen = ({ route }) => {
         console.log(res.data);
         onRefresh()
     }
-    const handleAddBusRoute = () => {
-        console.log("Tan")
-    }
+    const handleAddBusRoute = async () => {
+        try {
+            const token = await AsyncStorage.getItem("token");
+            let response = await authApi(token).post(`/businfors/${route.params?.busId}/busroutes/`,
+            {
+                "code" : routeEle.code,
+                "starting_point": routeEle.starting_point,
+                "destination": routeEle.destination,
+                "active_time": routeEle.active_time,
+                "distance": routeEle.distance,
+                "estimated_duration": routeEle.estimated_duration,
+                "frequency": routeEle.frequency,
+                "fare": routeEle.fare,
+                "active": false
+            });
+            setRouteEle({})
+            setShowEditDialog(false)
+            Alert.alert('Thêm tuyến xe thành công, Liên hệ với hệ thống để được hoạt động !!')
+            onRefresh()
+            console.log(response.data);
+        } catch (ex) {
+            console.log(ex);
+        }
+      }
 
 
     const handleUpdateFare = async (busroute) => {
@@ -175,7 +196,7 @@ const SearchScreen = ({ route }) => {
                 </View>
             ) : null}
 
-            {!user/* && user.role === 'busowner'*/ ? (
+            {user && user.role === 'busowner'? (
                 <View style={styles.additionalInfoContainer}>
                     <TextInput
                         placeholder="Chỉnh sửa giá vé (Ví dụ: 100 200 300)"
