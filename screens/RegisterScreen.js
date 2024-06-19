@@ -51,6 +51,8 @@ const RegisterScreen = () => {
         form.append('last_name', user['last_name']);
         form.append('username', user['username']);
         form.append('password', user['password']);
+        form.append('phone', user['username']); // Viết kiểm soát nhập username
+
         if (user.avatar) {
             form.append('avatar', {
                 uri: user.avatar.uri,

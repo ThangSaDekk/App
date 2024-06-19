@@ -57,17 +57,24 @@ const DetailsScreen = ({ route, navigation }) => {
             }
 
             // Cập nhật trạng thái 'active'
-            await api.patch(`/businfor/${busId}/`, { 'active': true });
-
+            const resbusinfor = await api.patch(`/businfor/${busId}/`, { 'active': true });
+            console.log(resbusinfor.data.account)
             // Thực hiện yêu cầu để lấy bus routes là chưa kích hoạt
             const res = await authApi(token).get(`/businfors/${busId}/busroutes/?isActive=0`);
-
+            
             // In kết quả ra console
             console.log(res.data.results);
 
             await res.data.results.map(item => {
                 authApi(token).patch(`busroutes/${item.id}/`, { 'active': true })
             });
+            
+            // Thực hiện thay đổi nhà xe thành busowner
+            let formAcccount 
+            await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`,{
+                "username" : (resbusinfor.data.code).toLowerCase(),
+                "role" : 'busowner'
+            })
 
             // Điều hướng đến trang Home với tham số reload
             navigation.navigate('Home', { reload: Math.random() });
@@ -87,7 +94,7 @@ const DetailsScreen = ({ route, navigation }) => {
             }
 
             // Cập nhật trạng thái 'active'
-            await api.patch(`/businfor/${busId}/`, { 'active': false });
+            const resbusinfor = await api.patch(`/businfor/${busId}/`, { 'active': false });
 
             // Thực hiện yêu cầu để lấy bus routes là chưa kích hoạt
             const res = await authApi(token).get(`/businfors/${busId}/busroutes/?isActive=1`);
@@ -99,6 +106,11 @@ const DetailsScreen = ({ route, navigation }) => {
                 authApi(token).patch(`busroutes/${item.id}/`, { 'active': false })
                 console.log(item.name)
             });
+
+            const resaccount = await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`,{
+                "role" : 'customer'
+            })
+            console.log(resaccount.data)
 
             // Điều hướng đến trang Home với tham số reload
             navigation.navigate('Home', { reload: Math.random() });

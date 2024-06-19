@@ -43,7 +43,7 @@ const HomeScreen = ({ route, navigation }) => {
     <View style={styles.card}>
       <Image source={{ uri: bus.avatar }} style={styles.avatar} />
       <Text style={styles.name}>{bus.name}</Text>
-      <Text style={styles.code}>Mã nhà xe: {bus.code}</Text>
+      <Text style={styles.code}>Mã nhà xe: {bus.account}</Text>
       {roleAdmin && end === '/businfors/?active=1' ? (
         <View style={styles.buttonContainer}>
           <PaperButton
@@ -56,7 +56,7 @@ const HomeScreen = ({ route, navigation }) => {
           </PaperButton>
           <PaperButton
             mode="contained"
-            onPress={() => { navigation.navigate('Search', { busId: bus.id }) }}
+            onPress={() => { navigation.navigate("Search", { busId: bus.id }) }}
             style={styles.button}
             buttonColor="#FFA500"
           >
