@@ -157,7 +157,7 @@ const SearchScreen = ({ route }) => {
                 style={[styles.card, { backgroundColor: item.active ? "#FFA500" : "#FA8072", marginBottom: user && user.role === 'admin' ? 5 : 20 }]}
                 onPress={() => {
                     if (item.active) {
-                        navigation.navigate('BusLineDetails', { busRouteId: item.id, fare: item.fare });
+                        navigation.navigate('BusLineDetails', { busRouteId: item.id, fare: item.fare, estimated_duration: item.estimated_duration});
                     }
                 }}
             >

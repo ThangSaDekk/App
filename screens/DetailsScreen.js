@@ -61,19 +61,19 @@ const DetailsScreen = ({ route, navigation }) => {
             console.log(resbusinfor.data.account)
             // Thực hiện yêu cầu để lấy bus routes là chưa kích hoạt
             const res = await authApi(token).get(`/businfors/${busId}/busroutes/?isActive=0`);
-            
+
             // In kết quả ra console
             console.log(res.data.results);
 
             await res.data.results.map(item => {
                 authApi(token).patch(`busroutes/${item.id}/`, { 'active': true })
             });
-            
+
             // Thực hiện thay đổi nhà xe thành busowner
-            let formAccount  = new FormData();
+            let formAccount = new FormData();
             formAccount.append('username', (resbusinfor.data.code).toLowerCase())
             formAccount.append('role', 'busowner')
-            const resaccount = await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`,formAccount, {
+            const resaccount = await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`, formAccount, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -111,21 +111,21 @@ const DetailsScreen = ({ route, navigation }) => {
                 authApi(token).patch(`busroutes/${item.id}/`, { 'active': false })
                 console.log(item.name)
             });
-            let formAccount  = new FormData();
+            let formAccount = new FormData();
             formAccount.append('role', 'customer');
-            const resaccount1 = await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`,formAccount,{
+            const resaccount1 = await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`, formAccount, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             })
             console.log(resaccount1.data.username)
             formAccount.append('username', resaccount1.data.phone);
-            const resaccount2 = await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`,formAccount,{
+            const resaccount2 = await authApi(token).patch(`/accounts/${resbusinfor.data.account}/`, formAccount, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             })
-        
+
             console.log(resaccount2.data.username)
             console.log(resaccount2.data.role)
 
@@ -221,19 +221,19 @@ const DetailsScreen = ({ route, navigation }) => {
                         user && user.role === 'admin' ? (
                             busDetails.active === false ? (
                                 <View style={{ flexDirection: 'row' }}>
-                                    <TouchableOpacity onPress={handleConfirmeBusinfor} style={[styles.button, { width: '47%', backgroundColor:'lightgreen' }]}>
+                                    <TouchableOpacity onPress={handleConfirmeBusinfor} style={[styles.button, { width: '47%', backgroundColor: 'lightgreen' }]}>
                                         <Text style={styles.buttonText}>Duyệt hoạt động</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity onPress={console.log("press")} style={[styles.button, { width: '37%', marginLeft: '6%', backgroundColor:'#FA8072' }]}>
+                                    <TouchableOpacity onPress={console.log("press")} style={[styles.button, { width: '37%', marginLeft: '6%', backgroundColor: '#FA8072' }]}>
                                         <Text style={styles.buttonText}>Xóa yêu cầu</Text>
                                     </TouchableOpacity>
                                 </View>
                             ) : (
-                                <TouchableOpacity onPress={handleCancleBusinfor} style={[styles.button, { width: '40%', backgroundColor:"#FA8072" }]}>
+                                <TouchableOpacity onPress={handleCancleBusinfor} style={[styles.button, { width: '40%', backgroundColor: "#FA8072" }]}>
                                     <Text style={styles.buttonText}>Khóa nhà xe</Text>
                                 </TouchableOpacity>
                             )
-                        ) : (
+                        ) : ( user && user.role == 'busowner' ?
                             busDetails.is_delivery_enabled ? (
                                 <TouchableOpacity onPress={handleDeliveryPress} style={[styles.button, { width: '40%' }]}>
                                     <Text style={styles.buttonText}>Đặt giao hàng</Text>
@@ -242,8 +242,18 @@ const DetailsScreen = ({ route, navigation }) => {
                                 <View style={[styles.button, { width: '40%', backgroundColor: '#ccc' }]}>
                                     <Text style={[styles.buttonText, { color: '#888' }]}>Đặt giao hàng</Text>
                                 </View>
+                            ):(                    <Text style={[styles.text,{backgroundColor:busDetails.is_delivery_enabled ?"#FFA500":"#ccc"}]}>Dịch vụ giao hàng</Text>
                             )
                         )
+                    }
+                    {user ? <>
+                        <TouchableOpacity onPress={() => navigation.navigate("Comment", {businforId: busId})} style={[styles.button, { width: '50%' }]}>
+                            <Text style={styles.buttonText}>Chi tiết đánh giá</Text>
+                        </TouchableOpacity>
+                    </> :
+                        <TouchableOpacity onPress={()=>{navigation.navigate("Login")}} style={[styles.button, { width: '85%' }]}>
+                            <Text style={styles.buttonText}>Đăng nhập để xem chi tiết đánh giá</Text>
+                        </TouchableOpacity>
                     }
 
                 </>
@@ -329,25 +339,25 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         marginTop: 5,
         color: '#FFA500',
-        width:'100%',
-        textAlign:'center',
+        width: '100%',
+        textAlign: 'center',
         borderBottomWidth: 3,
         borderColor: '#555'
     },
     text: {
         fontSize: 17,
-        fontWeight:'bold',
+        fontWeight: 'bold',
         marginBottom: 5,
         backgroundColor: "#FFA500",
         paddingHorizontal: 40,
         paddingVertical: 10,
-        width:'100%',
+        width: '100%',
         borderBottomRightRadius: 30,
         borderTopLeftRadius: 30,
     },
     avatar: {
         width: '100%',
-        height: '38%',
+        height: '30%',
         shadowRadius: 10,
         borderBottomRightRadius: 40,
         borderTopLeftRadius: 40,
@@ -368,7 +378,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        width:'100%',
+        width: '100%',
     },
     modalBackground: {
         flex: 1,

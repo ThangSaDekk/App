@@ -161,7 +161,7 @@ const BookingScreen = ({ route }) => {
             for (let i = 0; i < response.data.length; i++) {
                 const ticket = response.data[i];
 
-                const billId = ticket.bill;
+                const billId = ticket.bill.id;
                 const currentTime = new Date().toISOString();
 
                 // Update bill
@@ -318,11 +318,12 @@ const BookingScreen = ({ route }) => {
                             style={styles.paymentInput}
                             value={paymentCode}
                             onChangeText={setPaymentCode}
-                            keyboardType="numeric"
+                            keyboardType="default"
                         />
                         <TouchableOpacity
-                            style={styles.paymentButton}
+                            style={[styles.paymentButton,{backgroundColor: paymentCode? "#FFA500":"#ccc"}]}
                             onPress={handlePaymentConfirm}
+                            disabled={!paymentCode}
                         >
                             <Text style={styles.paymentButtonText}>Xác nhận thanh toán</Text>
                         </TouchableOpacity>
@@ -348,7 +349,7 @@ const BookingScreen = ({ route }) => {
                         </ScrollView>
                         <TouchableOpacity
                             style={styles.paymentButton}
-                            onPress={() => setShowTicketDialog(false)}
+                            onPress={() => {setShowTicketDialog(false), navigation.goBack()}}
                         >
                             <Text style={styles.paymentButtonText}>OK</Text>
                         </TouchableOpacity>
@@ -358,7 +359,7 @@ const BookingScreen = ({ route }) => {
 
 
             <TouchableOpacity
-                style={styles.confirmButton}
+                style={[styles.confirmButton,{backgroundColor: selectedPaymentMethod ? "#FFA500":"#ccc"}]}
                 onPress={() => setShowPaymentDialog(true)}
                 disabled={!selectedPaymentMethod}
             >

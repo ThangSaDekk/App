@@ -10,11 +10,15 @@ import DetailsScreen from './screens/DetailsScreen';
 import SearchScreen from './screens/SearchScreen';
 import BusLineDetailsScreen from './screens/BusLineDetailsScreen';
 import BookingScreen from './screens/BookingScreen';
-import LoginScreen from './screens/LoginScreen'; // Add this import
-import RegisterScreen from './screens/RegisterScreen'; // Add this import
+import LoginScreen from './screens/LoginScreen';
+import RegisterScreen from './screens/RegisterScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import TicketsScreen from './screens/TicketsScreen'; 
+
 import { MyDispatchContext, MyUserContext } from './services/Contexts';
 import { MyUserReducer } from './services/Reducers';
+import CommentScreen from './screens/CommentScreen';
+import StatsScreen from './screens/StatsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -33,7 +37,18 @@ const HomeStack = () => {
         component={DetailsScreen}
         options={{ headerShown: true, title: 'Chi tiết nhà xe' }}
       />
+      <Stack.Screen
+        name="Comment"
+        component={CommentScreen}
+        options={{ headerShown: true, title: 'Đánh giá và bình luận' }}
+      />
+      <Stack.Screen
+        name="Stats"
+        component={StatsScreen}
+        options={{ headerShown: true, title: 'Thống kê' }}
+      />
     </Stack.Navigator>
+    
   );
 };
 
@@ -60,6 +75,24 @@ const SearchStack = () => {
   );
 };
 
+// Stack navigation cho màn hình hồ sơ và vé
+const ProfileStack = () => {
+  return (
+    <Stack.Navigator initialRouteName="Profile">
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Tickets"
+        component={TicketsScreen}
+        options={{ headerShown: true, title: 'Danh sách vé' }}
+      />
+    </Stack.Navigator>
+  );
+};
+
 // Component App chính của ứng dụng
 const MyTab = () => {
   const user = useContext(MyUserContext);
@@ -73,7 +106,7 @@ const MyTab = () => {
         tabBarIcon: ({ color, size }) => {
           let iconName;
           if (route.name === 'Trang chủ') {
-            iconName = 'bus';
+            iconName ='home';
           } else if (route.name === 'SearchBus') {
             iconName = 'search';
           } else if (route.name === 'Login') {
@@ -82,6 +115,10 @@ const MyTab = () => {
             iconName = 'person-add';
           } else if (route.name === 'Profile') {
             iconName = 'person';
+          } else if (route.name === 'ProfileAcc'){
+            iconName = 'person'
+          } else if (route.name === 'Stats'){
+            iconName = 'stats';
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -112,8 +149,8 @@ const MyTab = () => {
         </>
       ) : (
         <Tab.Screen
-          name="Profile"
-          component={ProfileScreen}
+          name="ProfileAcc"
+          component={ProfileStack}
           options={{ title: 'Hồ sơ cá nhân' }}
         />
       )}

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Modal, ScrollView,
 import { Button, Avatar, Divider, HelperText, IconButton } from "react-native-paper";
 import { MyDispatchContext, MyUserContext } from "../services/Contexts";
 import { useNavigation } from "@react-navigation/native";
-import { authApi } from "../services/api";
+import api, { authApi } from "../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ProfileScreen = () => {
@@ -57,7 +57,7 @@ const ProfileScreen = () => {
             Alert.alert("Đăng kí thành công, đang chờ duyệt.");
             console.log("Đăng kí thành công, đang chờ duyệt.");
             setBusinforEle({})
-            
+
             console.log(response.status);
         } catch (ex) {
             if (ex.response) {
@@ -122,6 +122,26 @@ const ProfileScreen = () => {
             [fieldName]: value
         });
     };
+    const editDelivery = async () => {
+        try{
+            const token = await AsyncStorage.getItem('token');
+            // phải lấy businfor trước
+            const response_get = await authApi(token).get('/businfors/current-businfor/');
+            state = response_get.data.is_delivery_enabled
+            //console.log(state)
+            // Thực hiện patch businfor
+            const response_patch = await authApi(token).patch('/businfors/current-businfor/',{
+                'is_delivery_enabled': !state,
+            });
+            //console.log(response_patch.data);
+            Alert.alert(`Thiếp lập thành công !!\n Trạng thái: ${state? 'Không họat động':'Đang hoạt động'}`)
+
+        }catch(ex)
+        {
+            console.log(ex);
+        }
+
+    }
 
     return (
         <View style={styles.container}>
@@ -150,6 +170,7 @@ const ProfileScreen = () => {
                             Đăng ký trở thành đối tác !!
                         </Button>
                     )}
+                    
                 </View>
             )}
 
@@ -166,6 +187,24 @@ const ProfileScreen = () => {
                 <Text style={styles.infoText}>{user.address}</Text>
                 {/* Add more user information as needed */}
             </View>
+            {user && user.role === 'busowner' ?
+                <Button
+                    icon="truck"
+                    mode="contained"
+                    onPress={editDelivery}
+                    style={styles.logoutButton}
+                >
+                    Thiết lập giao hàng
+                </Button> : <></>}
+                {user && user.role === 'customer' ?
+                <Button
+                    icon="road"
+                    mode="contained"
+                    onPress={() =>{navigation.navigate("Tickets")}}
+                    style={styles.logoutButton}
+                >
+                    Lịch sử các chuyến đi
+                </Button> : <></>}
             <Button
                 icon="account-edit"
                 mode="contained"

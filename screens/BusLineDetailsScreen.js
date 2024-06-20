@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import api, { authApi } from '../services/api';
 import { MyUserContext } from '../services/Contexts';
 import { Button, Icon, TextInput } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker'
+import moment from 'moment';
 
 const BusLineDetailsScreen = ({ route, navigation }) => {
-    const { busRouteId, fare } = route.params;
+    const { busRouteId, fare, estimated_duration } = route.params;
     const [busLines, setBusLines] = useState([]);
     const [loading, setLoading] = useState(true);
     const user = useContext(MyUserContext);
@@ -138,8 +139,38 @@ const BusLineDetailsScreen = ({ route, navigation }) => {
         return dateObj.toLocaleString(); // Chuyển đổi thành định dạng ngày giờ dễ đọc
     };
     
-    const addBusLines = () =>{
-        console.log(formatExpectedTime(date));
+    const addTime = (baseTime, additionalTime) => {
+        const base = moment(baseTime);
+        const [hours, minutes, seconds] = additionalTime.split(':').map(Number);
+    
+        base.add(hours, 'hours');
+        base.add(minutes, 'minutes');
+        base.add(seconds, 'seconds');
+    
+        return base.toISOString(); // Trả về dưới dạng ISO 8601
+    };
+
+    const addBusLines = async () =>{
+        try {
+            const token = await AsyncStorage.getItem("token");
+            console.log(date);
+            // console.log(busRouteId)
+            // console.log(addTime(date,estimated_duration))
+            let response = await authApi(token).post(`/busroutes/${busRouteId}/buslines/`,{
+                'code': formatExpectedTime(date),
+                'active': true,
+                'departure_date_time': date,
+                'arrival_excepted': addTime(date,estimated_duration) ,
+            });
+            // console.log(response.data)
+            Alert.alert('Đăng kí thành công');
+            setLoading(true)
+            onRefresh();
+        } catch (ex) {
+              // console.log(ex);
+              Alert.alert('Error: Đăng ký không thành công !!!');
+        };
+      
     }
 
     if (loading) {
@@ -154,7 +185,8 @@ const BusLineDetailsScreen = ({ route, navigation }) => {
 
     return (
         <View style={styles.container}>
-             <Text style={{ backgroundColor: "#ccc", padding: 15, borderRadius: 5, marginBottom: 10, textAlign:'center',color: "black", fontWeight: 'bold', fontSize: 18 }}>{formatExpectedTime(date)}</Text>
+         {user && user.role === 'busowner' ? <>
+            <Text style={{ backgroundColor: "#ccc", padding: 15, borderRadius: 5, marginBottom: 10, textAlign:'center',color: "black", fontWeight: 'bold', fontSize: 18 }}>{formatExpectedTime(date)}</Text>
             <View style={{flexDirection:'row'}}> 
                 <TouchableOpacity onPress={() => showMode('date')} style={{ flex:1, backgroundColor: "lightgreen", padding: 15, borderRadius: 10, marginBottom: 10, margin: 5 }}>
                     <Text style={{ color: "black", fontWeight: 'bold', fontSize: 15, textAlign: 'center',}}>Chọn ngày</Text>
@@ -166,6 +198,9 @@ const BusLineDetailsScreen = ({ route, navigation }) => {
                     <Text style={{ color: "black", fontWeight: 'bold', fontSize: 15, textAlign: 'center' }}>Thêm chuyến xe</Text>
                 </TouchableOpacity>
             </View>
+         </>:<></>
+            
+         }
             {show && (
                 <DateTimePicker
                     value={date}
@@ -192,6 +227,7 @@ const BusLineDetailsScreen = ({ route, navigation }) => {
                             onRefresh={onRefresh}
                         />
                     }
+                    
                 />
             )}
         </View>

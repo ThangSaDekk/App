@@ -101,6 +101,16 @@ const HomeScreen = ({ route, navigation }) => {
           Xem chi tiết
         </PaperButton>
       )}
+      {!user /*&& !user.role ==='busowner'*/ && (
+         <PaperButton
+         mode="contained"
+         onPress={() => {navigation.navigate("Stats")}}
+         style={styles.singleButton}
+         buttonColor="#FFA500"
+       >
+         Xem chi tiết thống kê
+       </PaperButton>
+  )}
     </View>
   );
 
