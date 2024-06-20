@@ -2,9 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import api, { authApi } from '../services/api';
 import { MyUserContext } from '../services/Contexts';
-import { Button, Icon } from 'react-native-paper';
+import { Button, Icon, TextInput } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker'
 
 const BusLineDetailsScreen = ({ route, navigation }) => {
     const { busRouteId, fare } = route.params;
@@ -12,14 +13,25 @@ const BusLineDetailsScreen = ({ route, navigation }) => {
     const [loading, setLoading] = useState(true);
     const user = useContext(MyUserContext);
     const [refreshing, setRefreshing] = useState(false);
+    const [date, setDate] = useState(new Date());
+    const [show, setShow] = useState(false);
+    const [mode, setMode] = useState('date');
 
+    const onChange = (e, selectedDated) => {
+        setDate(selectedDated);
+        setShow(false);
+    }
+
+    const showMode = (modeToShow) => {
+        setShow(true);
+        setMode(modeToShow);
+    }
 
     // Fetch bus lines based on busRouteId
     const fetchBusLines = async () => {
         try {
             let url = `/busroutes/${busRouteId}/buslines/`;
-            if(!user || user.role !== 'admin')
-            {
+            if (!user || user.role !== 'admin') {
                 url += '?isActive=1'
             }
             console.log(url)
@@ -36,7 +48,7 @@ const BusLineDetailsScreen = ({ route, navigation }) => {
         fetchBusLines();
     }, []);
 
-    const handleLockOrUnLock = async (active, busroute) =>{
+    const handleLockOrUnLock = async (active, busroute) => {
         const token = await AsyncStorage.getItem('token');
         let res = authApi(token).patch(`/busline/${busroute}/`, { 'active': !active })
         console.log(res.data);
@@ -69,7 +81,7 @@ const BusLineDetailsScreen = ({ route, navigation }) => {
 
                         {user ? (
                             user.role === 'admin' ? (
-                                <View style={[styles.statusContainer, { backgroundColor: item.active? "lightgreen":"#FA8072" }]}>
+                                <View style={[styles.statusContainer, { backgroundColor: item.active ? "lightgreen" : "#FA8072" }]}>
                                     <Text style={styles.statusText}>
                                         <Ionicons
                                             name={item.active ? "checkmark-circle-outline" : "close-circle-outline"}
@@ -125,6 +137,10 @@ const BusLineDetailsScreen = ({ route, navigation }) => {
         const dateObj = new Date(isoDate);
         return dateObj.toLocaleString(); // Chuyển đổi thành định dạng ngày giờ dễ đọc
     };
+    
+    const addBusLines = () =>{
+        console.log(formatExpectedTime(date));
+    }
 
     if (loading) {
         return (
@@ -138,7 +154,29 @@ const BusLineDetailsScreen = ({ route, navigation }) => {
 
     return (
         <View style={styles.container}>
-            {(busLines.length === 0)  ? (
+             <Text style={{ backgroundColor: "#ccc", padding: 15, borderRadius: 5, marginBottom: 10, textAlign:'center',color: "black", fontWeight: 'bold', fontSize: 18 }}>{formatExpectedTime(date)}</Text>
+            <View style={{flexDirection:'row'}}> 
+                <TouchableOpacity onPress={() => showMode('date')} style={{ flex:1, backgroundColor: "lightgreen", padding: 15, borderRadius: 10, marginBottom: 10, margin: 5 }}>
+                    <Text style={{ color: "black", fontWeight: 'bold', fontSize: 15, textAlign: 'center',}}>Chọn ngày</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => showMode('time')} style={{ flex:1,backgroundColor: "lightgreen", padding: 15, borderRadius: 10, marginBottom: 10, margin: 5 }}>
+                    <Text style={{ color: "black", fontWeight: 'bold', fontSize: 15, textAlign: 'center' }}>Chọn giờ</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={addBusLines} style={{ flex:1,backgroundColor: "lightgreen", padding: 15, borderRadius: 10, marginBottom: 10, margin: 5 }}>
+                    <Text style={{ color: "black", fontWeight: 'bold', fontSize: 15, textAlign: 'center' }}>Thêm chuyến xe</Text>
+                </TouchableOpacity>
+            </View>
+            {show && (
+                <DateTimePicker
+                    value={date}
+                    mode={mode}
+                    is24Hour={true}
+                    onChange={onChange}
+                />
+            )
+            }
+
+            {(busLines.length === 0) ? (
                 <View style={styles.noDataContainer}>
                     <Text style={styles.noDataText}>Không có chuyến xe nào</Text>
                 </View>
@@ -181,9 +219,9 @@ const styles = StyleSheet.create({
         backgroundColor: "#f0f0f0"
     },
     cartIcon: {
-        flexDirection:'row',
-        justifyContent:'center',
-        marginBottom:10,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginBottom: 10,
     },
     cardDetails: {
         flex: 1,
@@ -197,14 +235,14 @@ const styles = StyleSheet.create({
         elevation: 10,
         shadowColor: 10,
         borderRadius: 20,
-        marginHorizontal:10,
-        textAlign:'center'
+        marginHorizontal: 10,
+        textAlign: 'center'
     },
     cardText: {
         marginTop: 10,
         fontSize: 14,
         color: '#555',
-        
+
     },
     bookButton: {
         backgroundColor: '#FFA500',
