@@ -151,7 +151,7 @@ const DetailsScreen = ({ route, navigation }) => {
     };
     const handleDeliveryConfirm = async () => {
         try {
-            const token = AsyncStorage.getItem('token');
+            const token = await AsyncStorage.getItem('token');
             if (token === undefined) {
                 console.info('Chưa được xác thực !!')
             }
@@ -164,11 +164,7 @@ const DetailsScreen = ({ route, navigation }) => {
                 "receiver_email": deliverys.receiver_email,
                 "weight": deliverys.weight,
                 "content": deliverys.content
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+            }, );
 
             if (response.status === 200 || response.status === 201) {
                 // Assuming a successful response status

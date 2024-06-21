@@ -101,10 +101,10 @@ const HomeScreen = ({ route, navigation }) => {
           Xem chi tiết
         </PaperButton>
       )}
-      {!user /*&& !user.role ==='busowner'*/ && (
+      {user && user.role ==='busowner' && (
          <PaperButton
          mode="contained"
-         onPress={() => {navigation.navigate("Stats")}}
+         onPress={() => {navigation.navigate("Stats",{busId:bus.id})}}
          style={styles.singleButton}
          buttonColor="#FFA500"
        >
