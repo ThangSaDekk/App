@@ -2,7 +2,12 @@
   "expo": {
     "name": "BusLineManagerApp",
     "slug": "BusLineManagerApp",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "6d55b459-dcbc-414d-817a-61d2482525b8"
+      }
+    }
   },
   "name": "BusLineManagerApp"
 }
